@@ -1,0 +1,5 @@
+Source: https://github.com/tplai/kbsim
+License: MIT (see LICENSE.txt)
+Copyright (c) 2021 Thomas Lai
+
+The audio files are included without modification.

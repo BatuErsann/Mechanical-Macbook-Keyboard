@@ -1,0 +1,10 @@
+Kailh Box White mechanical switch recordings
+
+Source: https://github.com/Mange/clicketyclack
+Author: Magnus Bergmark
+Copyright: Copyright (c) 2021 Magnus Bergmark
+License: MIT (see LICENSE.txt in this directory)
+
+The pack contains five key-down and five key-up recordings. Haptik loads them
+as mono floating-point samples, trims leading silence, normalizes the peaks,
+and selects a key-down variation according to measured impact intensity.

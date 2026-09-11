@@ -18,7 +18,7 @@ FRAMEWORKS := -framework CoreFoundation -framework IOKit
 AUDIO_FRAMEWORKS := -framework AudioToolbox -framework AudioUnit -framework CoreAudio
 APP_FRAMEWORKS := $(FRAMEWORKS) $(AUDIO_FRAMEWORKS) -framework Cocoa -framework ApplicationServices
 
-.PHONY: all app run probe test clean
+.PHONY: all app run probe clean
 
 all: app
 
@@ -50,9 +50,7 @@ $(BUILD_DIR)/$(APP_NAME): $(BUILD_DIR)/main.o $(BUILD_DIR)/haptik_sensor.o $(BUI
 
 $(BUILD_DIR)/Haptik.icns: $(TOOLS_DIR)/make_icon.m | $(BUILD_DIR)
 	$(CC) -fobjc-arc $< -framework Cocoa -o $(BUILD_DIR)/make-icon
-	mkdir -p $(BUILD_DIR)/Haptik.iconset
-	$(BUILD_DIR)/make-icon $(BUILD_DIR)/Haptik.iconset
-	iconutil -c icns $(BUILD_DIR)/Haptik.iconset -o $@
+	$(BUILD_DIR)/make-icon $@
 
 $(APP_BUNDLE): $(BUILD_DIR)/$(APP_NAME) $(BUILD_DIR)/Haptik.icns resources/macos/Info.plist $(SOUND_FILES) $(LOCALIZATION_FILES)
 	mkdir -p $(APP_MACOS) $(APP_RESOURCES)/Sounds/KailhWhite $(APP_RESOURCES)/Sounds/KBSim
@@ -71,22 +69,6 @@ app: $(APP_BUNDLE)
 
 run: app
 	open $(APP_BUNDLE)
-
-$(BUILD_DIR)/test_impact.o: tests/test_impact.c $(INC_DIR)/haptik_impact.h | $(BUILD_DIR)
-	$(CC) $(CFLAGS) -c $< -o $@
-
-$(BUILD_DIR)/test-impact: $(BUILD_DIR)/haptik_impact.o $(BUILD_DIR)/test_impact.o
-	$(CC) $^ -o $@
-
-$(BUILD_DIR)/test_audio_pack.o: tests/test_audio_pack.c $(INC_DIR)/haptik_audio.h | $(BUILD_DIR)
-	$(CC) $(CFLAGS) -c $< -o $@
-
-$(BUILD_DIR)/test-audio-pack: $(BUILD_DIR)/haptik_audio.o $(BUILD_DIR)/test_audio_pack.o
-	$(CC) $^ -o $@ $(AUDIO_FRAMEWORKS) -framework CoreFoundation
-
-test: $(BUILD_DIR)/test-impact $(BUILD_DIR)/test-audio-pack
-	./$(BUILD_DIR)/test-impact
-	./$(BUILD_DIR)/test-audio-pack
 
 clean:
 	rm -rf $(BUILD_DIR)

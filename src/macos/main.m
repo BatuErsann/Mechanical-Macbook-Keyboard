@@ -20,8 +20,17 @@
 static const char *HAPTIK_DEBUG_LOG = "/private/tmp/haptik-debug.log";
 static double monotonic_seconds(void);
 
+static NSBundle *HaptikLocalizationBundle(void) {
+    NSString *language = [NSUserDefaults.standardUserDefaults stringForKey:@"language"];
+    if (language.length == 0) {
+        return NSBundle.mainBundle;
+    }
+    NSString *path = [NSBundle.mainBundle pathForResource:language ofType:@"lproj"];
+    return path == nil ? NSBundle.mainBundle : [NSBundle bundleWithPath:path];
+}
+
 static NSString *HL(NSString *key) {
-    return NSLocalizedString(key, nil);
+    return [HaptikLocalizationBundle() localizedStringForKey:key value:key table:nil];
 }
 
 static void haptik_debug_log(const char *format, ...) {
@@ -60,6 +69,7 @@ static double monotonic_seconds(void) {
     NSArray<NSMenuItem *> *_volumeMenuItems;
     NSArray<NSMenuItem *> *_sensitivityMenuItems;
     NSArray<NSMenuItem *> *_soundMenuItems;
+    NSArray<NSMenuItem *> *_languageMenuItems;
 
     haptik_sensor_t *_sensor;
     haptik_impact_detector_t _impactDetector;
@@ -159,7 +169,8 @@ static CGEventRef keyboard_event_callback(
         @"enabled": @YES,
         @"volume": @0.65,
         @"sensitivity": @1.0,
-        @"soundPack": @"kailh_white"
+        @"soundPack": @"kailh_white",
+        @"language": @""
     }];
     _enabled = [defaults boolForKey:@"enabled"];
     _volume = [defaults floatForKey:@"volume"];
@@ -326,6 +337,35 @@ static CGEventRef keyboard_event_callback(
     _sensitivityMenuItems = sensitivityItems.copy;
     sensitivityRoot.submenu = sensitivityMenu;
     [menu addItem:sensitivityRoot];
+
+    NSMenuItem *languageRoot = [[NSMenuItem alloc]
+        initWithTitle:HL(@"menu.language") action:nil keyEquivalent:@""];
+    NSMenu *languageMenu = [[NSMenu alloc] initWithTitle:HL(@"menu.language")];
+    NSArray<NSDictionary<NSString *, NSString *> *> *languages = @[
+        @{@"code": @"", @"title": HL(@"choice.language.automatic")},
+        @{@"code": @"en", @"title": @"English"},
+        @{@"code": @"tr", @"title": @"Türkçe"},
+        @{@"code": @"es", @"title": @"Español"},
+        @{@"code": @"fr", @"title": @"Français"},
+        @{@"code": @"de", @"title": @"Deutsch"},
+        @{@"code": @"it", @"title": @"Italiano"},
+        @{@"code": @"pt", @"title": @"Português"},
+        @{@"code": @"ja", @"title": @"日本語"},
+        @{@"code": @"ko", @"title": @"한국어"},
+        @{@"code": @"zh-Hans", @"title": @"简体中文"}
+    ];
+    NSMutableArray<NSMenuItem *> *languageItems = [NSMutableArray array];
+    for (NSDictionary<NSString *, NSString *> *language in languages) {
+        NSMenuItem *item = [[NSMenuItem alloc] initWithTitle:language[@"title"]
+            action:@selector(setLanguage:) keyEquivalent:@""];
+        item.target = self;
+        item.representedObject = language[@"code"];
+        [languageMenu addItem:item];
+        [languageItems addObject:item];
+    }
+    _languageMenuItems = languageItems.copy;
+    languageRoot.submenu = languageMenu;
+    [menu addItem:languageRoot];
 
     [menu addItem:NSMenuItem.separatorItem];
     _permissionMenuItem = [[NSMenuItem alloc]
@@ -546,6 +586,12 @@ static CGEventRef keyboard_event_callback(
             ? NSControlStateValueOn
             : NSControlStateValueOff;
     }
+    NSString *selectedLanguage = [NSUserDefaults.standardUserDefaults stringForKey:@"language"];
+    for (NSMenuItem *item in _languageMenuItems) {
+        item.state = [item.representedObject isEqualToString:selectedLanguage ?: @""]
+            ? NSControlStateValueOn
+            : NSControlStateValueOff;
+    }
 }
 
 - (NSArray<NSDictionary *> *)availableSoundPacks {
@@ -650,6 +696,20 @@ static CGEventRef keyboard_event_callback(
         haptik_audio_trigger(_audio, 36, 0.65F);
     }
     [self refreshMenu];
+}
+
+- (IBAction)setLanguage:(NSMenuItem *)sender {
+    NSString *language = sender.representedObject;
+    [NSUserDefaults.standardUserDefaults setObject:language forKey:@"language"];
+    haptik_debug_log("language selected: %s", language.UTF8String);
+
+    [_window close];
+    _window = nil;
+    _diagnosticsLabel = nil;
+    [NSStatusBar.systemStatusBar removeStatusItem:_statusItem];
+    _statusItem = nil;
+    [self buildStatusMenu];
+    [self showWindow:nil];
 }
 
 - (void)systemDidWake:(NSNotification *)notification {

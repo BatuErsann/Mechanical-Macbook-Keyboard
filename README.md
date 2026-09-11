@@ -5,11 +5,15 @@ It estimates typing impact from a compatible MacBook’s built-in accelerometer 
 uses that estimate to vary sound intensity. It does **not** measure actual key
 pressure.
 
-The app includes its own icon and sound assets. Once built, double-click
-**Haptik.app** in Finder to launch it; no Terminal is needed to run it. The app
-interface follows the preferred language in macOS. It includes English, Turkish,
-Spanish, French, German, Italian, Portuguese, Japanese, Korean, and Simplified
-Chinese. Unsupported languages fall back to English.
+The ready-to-run **Haptik.app** is included in this folder. Double-click it in
+Finder to launch it; no Terminal or build step is required. The app interface
+follows the preferred language in macOS. It includes English, Turkish, Spanish,
+French, German, Italian, Portuguese, Japanese, Korean, and Simplified Chinese.
+Unsupported languages fall back to English.
+
+To choose a language inside the app, click the keyboard icon in the menu bar and
+select **Language / Dil**. Choose **Automatic (macOS)** to follow the system
+language again; the selected language is remembered.
 
 ## Features
 
@@ -33,7 +37,13 @@ Chinese. Unsupported languages fall back to English.
 The sensor integration uses an undocumented Apple interface. Compatibility may vary
 with hardware and macOS versions.
 
-## Build and launch
+## Run immediately
+
+Double-click **Haptik.app** in Finder. It is a self-contained, signed app bundle
+with its icon, sounds, and language resources already included. You can drag it
+to Applications if you want to keep it there.
+
+## Build from source (optional)
 
 Run from the repository root:
 
@@ -42,8 +52,8 @@ make app
 open build/Haptik.app
 ```
 
-Alternatively, double-click `build/Haptik.app` in Finder. Drag it to Applications
-if you want to keep it there. All runtime assets are inside the bundle.
+This creates a fresh `build/Haptik.app`; you can also double-click that bundle in
+Finder. All runtime assets are inside the bundle.
 
 The build uses a local ad hoc signature. Developer ID signing, notarization, and a
 DMG installer are not configured.
@@ -79,27 +89,12 @@ from the menu, or open the app again, to return to the status window. Choose
 The app writes startup and initial input diagnostics to `/private/tmp/haptik-debug.log`.
 The log is replaced on each launch.
 
-## Tests and sensor diagnostics
-
-Run from the repository root so the audio tests can find the source sound assets:
-
-```sh
-make test
-make probe
-./build/haptik-sensor-probe
-```
-
-The tests cover impact filtering and audio pack loading. The standalone probe
-reports sensor availability, access status, sample rate, and acceleration peaks.
-When running it from Terminal, Terminal may need its own Input Monitoring permission.
-Automated tests do not replace checking physical keyboard input and sensor access
-in the running app.
-
 ## Project structure
 
 ```text
 haptik/
-├── Makefile                    # Build, bundle, signing, and test targets
+├── Haptik.app                  # Ready-to-run macOS app bundle
+├── Makefile                    # Optional source build and bundle target
 ├── README.md
 ├── THIRD_PARTY_NOTICES.md       # Dependency and sound attribution
 ├── include/                    # Shared C interfaces
@@ -117,9 +112,8 @@ haptik/
 │   ├── macos/Info.plist        # Application bundle metadata
 │   └── sounds/                 # Sound packs and their license/source files
 ├── tools/
-│   ├── make_icon.m             # Native app icon generator
+│   ├── make_icon.m             # Direct .icns generator
 │   └── sensor_probe.c          # Standalone sensor diagnostic tool
-├── tests/                      # Impact and audio pack tests
 ├── third_party/minimp3/        # Vendored MP3 decoder and license
 └── build/                      # Generated app, objects, tools, and test binaries
 ```
